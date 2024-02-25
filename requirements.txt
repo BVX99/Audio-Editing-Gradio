@@ -1,0 +1,11 @@
+torch
+torchaudio
+diffusers
+accelerate
+transformers
+tqdm
+soundfile
+progressbar
+einops
+scipy
+librosa==0.9.2
