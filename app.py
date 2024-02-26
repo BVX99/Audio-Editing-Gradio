@@ -153,6 +153,10 @@ Demo for the text-based editing method introduced in:
 <a href="https://arxiv.org/abs/2402.10009" style="text-decoration: underline;" target="_blank">	Zero-Shot Unsupervised and Text-Based Audio Editing Using DDPM Inversion </a> 
 </p>
 <p style="font-size:larger">
+
+"""
+
+help = """
 <b>Instructions:</b><br>
 Provide an input audio and a target prompt to edit the audio. <br>
 T<sub>start</sub> is used to control the tradeoff between fidelity to the original signal and text-adhearance.
@@ -169,7 +173,6 @@ For faster inference without waiting in queue, you may duplicate the space and u
 <a href="https://huggingface.co/spaces/hilamanor/audioEditing?duplicate=true">
 <img style="margin-top: 0em; margin-bottom: 0em; display:inline" src="https://bit.ly/3gLdBN6" alt="Duplicate Space" ></a>
 </p>
-
 """
 
 with gr.Blocks(css='style.css') as demo:
@@ -187,16 +190,14 @@ with gr.Blocks(css='style.css') as demo:
     do_inversion = gr.State(value=True)  # To save some runtime when editing the same thing over and over
 
     with gr.Row():
-        with gr.Column():
-            src_prompt = gr.Textbox(label="OPTIONAL: Source Prompt", lines=2, interactive=True,
-                                    placeholder="Optional: Describe the original audio input",)
-            input_audio = gr.Audio(sources=["upload", "microphone"], type="filepath", label="Input Audio",
-                                   interactive=True, scale=1)
+        input_audio = gr.Audio(sources=["upload", "microphone"], type="filepath", label="Input Audio",
+                               interactive=True, scale=1)
+        output_audio = gr.Audio(label="Edited Audio", interactive=False, scale=1)
 
-        with gr.Column():
-            tar_prompt = gr.Textbox(label="Target Prompt", placeholder="Describe your desired edited output",
+    with gr.Row():
+            tar_prompt = gr.Textbox(label="Prompt", info="Describe your desired edited output", placeholder="a recording of a happy upbeat arcade game soundtrack",
                                     lines=2, interactive=True)
-            output_audio = gr.Audio(label="Edited Audio", interactive=False, scale=1)
+            
 
     with gr.Row():
         with gr.Column():
@@ -204,13 +205,16 @@ with gr.Blocks(css='style.css') as demo:
 
     with gr.Row():
         t_start = gr.Slider(minimum=30, maximum=160, value=110, step=1, label="T-start", interactive=True, scale=3,
-                            info="Higher T-start -> stronger edit. Lower T-start -> more similar to original audio.")
+                            info="Higher T-start -> stronger edit. Lower T-start -> closer to original audio")
         model_id = gr.Dropdown(label="AudioLDM2 Version", choices=["cvssp/audioldm2",
                                                                    "cvssp/audioldm2-large",
                                                                    "cvssp/audioldm2-music"],
-                               info="Choose a checkpoint suitable for your intended audio and edit.",
+                               info="Choose a checkpoint suitable for your intended audio and edit",
                                value="cvssp/audioldm2-music", interactive=True, type="value", scale=2)
     with gr.Accordion("More Options", open=False):
+        with gr.Row():
+            src_prompt = gr.Textbox(label="Source Prompt", lines=2, interactive=True, info= "Optional: Describe the original audio input",
+                                    placeholder="A recording of a happy upbeat classical music piece",)
 
         with gr.Row():
             cfg_scale_src = gr.Number(value=3, minimum=0.5, maximum=25, precision=None,
