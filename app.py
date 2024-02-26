@@ -235,7 +235,7 @@ with gr.Blocks(css='style.css') as demo:
             submit = gr.Button("Edit")
 
     with gr.Row():
-        t_start = gr.Slider(minimum=30, maximum=160, value=110, step=1, label="T-start", interactive=True, scale=3,
+        t_start = gr.Slider(minimum=10, maximum=240, value=30, step=1, label="T-start", interactive=True, scale=3,
                             info="Higher T-start -> stronger edit. Lower T-start -> closer to original audio")
         model_id = gr.Dropdown(label="AudioLDM2 Version", choices=["cvssp/audioldm2",
                                                                    "cvssp/audioldm2-large",
@@ -252,7 +252,7 @@ with gr.Blocks(css='style.css') as demo:
                                       label="Source Guidance Scale", interactive=True, scale=1)
             cfg_scale_tar = gr.Number(value=12, minimum=0.5, maximum=25, precision=None,
                                       label="Target Guidance Scale", interactive=True, scale=1)
-            steps = gr.Number(value=200, step=1, minimum=20, maximum=1000,
+            steps = gr.Number(value=50, step=1, minimum=20, maximum=300,
                               label="Num Diffusion Steps", interactive=True, scale=1)
         with gr.Row():
             seed = gr.Number(value=0, precision=0, label="Seed", interactive=True)
