@@ -1,6 +1,6 @@
 ---
-title: AudioEditing
-emoji: 🌍
+title: Audio Editing
+emoji: 🎧
 colorFrom: indigo
 colorTo: gray
 sdk: gradio
