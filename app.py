@@ -173,15 +173,16 @@ def get_example():
 
 
 intro = """
-<h1 style="font-weight: 1400; text-align: center; margin-bottom: 7px;">Zero-Shot Text-Based Audio Editing Using DDPM Inversion</h1>
+<h1 style="font-weight: 1400; text-align: center; margin-bottom: 7px;"> AUDI 🎧  </h1>
+<h2 style="font-weight: 1400; text-align: center; margin-bottom: 7px;"> Audio editing Using DDPM Inversion 🎛️ </h2>
 <h3 style="margin-bottom: 10px; text-align: center;">
     <a href="https://arxiv.org/abs/2402.10009">[Paper]</a>&nbsp;|&nbsp;
     <a href="https://hilamanor.github.io/AudioEditing/">[Project page]</a>&nbsp;|&nbsp;
     <a href="https://github.com/HilaManor/AudioEditingCode">[Code]</a>
 </h3>
 <p style="font-size:large">
-Demo for the text-based editing method introduced in:
-<a href="https://arxiv.org/abs/2402.10009" style="text-decoration: underline;" target="_blank">	Zero-Shot Unsupervised and Text-Based Audio Editing Using DDPM Inversion </a> 
+Demo for the method introduced in:
+<b <a href="https://arxiv.org/abs/2402.10009" style="text-decoration: underline;" target="_blank">	Zero-Shot Unsupervised and Text-Based Audio Editing Using DDPM Inversion </a> </b>
 </p>
 <p style="font-size:larger">
 
@@ -210,7 +211,6 @@ with gr.Blocks(css='style.css') as demo:
     def reset_do_inversion():
         do_inversion = gr.State(value=True)
         return do_inversion
-
     gr.HTML(intro)
     wts = gr.State()
     zs = gr.State()
