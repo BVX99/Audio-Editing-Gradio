@@ -632,7 +632,7 @@ class AudioLDM2Wrapper(PipelineWrapper):
         return self
 
 
-def load_model(model_id, device, num_diffusion_steps, double_precision=False):
+def load_model(model_id, device, double_precision=False):
     ldm_stable = AudioLDM2Wrapper(model_id=model_id, device=device, double_precision=double_precision)
     ldm_stable.load_scheduler()
     torch.cuda.empty_cache()
