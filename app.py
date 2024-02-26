@@ -186,6 +186,12 @@ Demo for the method introduced in:
 </p>
 <p style="font-size:larger">
 
+<p style="font-size: 0.9rem; margin: 0rem; line-height: 1.2em; margin-top:1em">
+For faster inference without waiting in queue, you may duplicate the space and upgrade to GPU in settings.
+<a href="https://huggingface.co/spaces/hilamanor/audioEditing?duplicate=true">
+<img style="margin-top: 0em; margin-bottom: 0em; display:inline" src="https://bit.ly/3gLdBN6" alt="Duplicate Space" ></a>
+</p>
+
 """
 
 help = """
@@ -200,11 +206,7 @@ For example, use the music version for music and the large version for general a
 You can additionally provide a source prompt to guide even further the editing process.
 </p>
 <p style="font-size:larger">Longer input will take more time.</p>
-<p style="font-size: 0.9rem; margin: 0rem; line-height: 1.2em; margin-top:1em">
-For faster inference without waiting in queue, you may duplicate the space and upgrade to GPU in settings.
-<a href="https://huggingface.co/spaces/hilamanor/audioEditing?duplicate=true">
-<img style="margin-top: 0em; margin-bottom: 0em; display:inline" src="https://bit.ly/3gLdBN6" alt="Duplicate Space" ></a>
-</p>
+
 """
 
 with gr.Blocks(css='style.css') as demo:
@@ -259,7 +261,8 @@ with gr.Blocks(css='style.css') as demo:
             randomize_seed = gr.Checkbox(label='Randomize seed', value=False)
             length = gr.Number(label="Length", interactive=False, visible=False)
 
-    
+    with gr.Accordion("Help💡", open=False):
+        gr.HTML(help)
 
     submit.click(
         fn=randomize_seed_fn,
