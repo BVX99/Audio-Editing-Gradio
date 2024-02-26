@@ -33,6 +33,7 @@ def invert(x0, prompt_src, num_diffusion_steps, cfg_scale_src):  # , ldm_stable)
     return zs, wts
 
 
+
 def sample(zs, wts, steps, prompt_tar, tstart, cfg_scale_tar):  # , ldm_stable):
     # reverse process (via Zs and wT)
     tstart = torch.tensor(tstart, dtype=torch.int)
@@ -57,6 +58,14 @@ def sample(zs, wts, steps, prompt_tar, tstart, cfg_scale_tar):  # , ldm_stable):
 
     return f.name
 
+def change_tstart_range(t_start, steps):
+    maximum = int(0.8 * steps)
+    minimum = int(0.15 * steps)
+    if t_start > maximum:
+        t_start = maximum
+    elif t_start < minimum:
+        t_start = minimum
+    return t_start
 
 def edit(input_audio,
          model_id: str,
@@ -92,6 +101,9 @@ def edit(input_audio,
         zs = gr.State(value=zs_tensor)
         saved_inv_model = model_id
         do_inversion = False
+    
+    # make sure t_start is in the right limit
+    t_start = change_tstart_range(t_start, steps)
 
     output = sample(zs.value, wts.value, steps, prompt_tar=target_prompt, tstart=t_start,
                     cfg_scale_tar=cfg_scale_tar)
@@ -221,21 +233,14 @@ with gr.Blocks(css='style.css') as demo:
                                       label="Source Guidance Scale", interactive=True, scale=1)
             cfg_scale_tar = gr.Number(value=12, minimum=0.5, maximum=25, precision=None,
                                       label="Target Guidance Scale", interactive=True, scale=1)
-            steps = gr.Number(value=200, precision=0, minimum=20, maximum=1000,
+            steps = gr.Number(value=200, step=1, minimum=20, maximum=1000,
                               label="Num Diffusion Steps", interactive=True, scale=1)
         with gr.Row():
             seed = gr.Number(value=0, precision=0, label="Seed", interactive=True)
             randomize_seed = gr.Checkbox(label='Randomize seed', value=False)
             length = gr.Number(label="Length", interactive=False, visible=False)
 
-    def change_tstart_range(steps):
-        t_start.maximum = int(160/200 * steps)
-        t_start.minimum = int(30/200 * steps)
-        if t_start.value > t_start.maximum:
-            t_start.value = t_start.maximum
-        if t_start.value < t_start.minimum:
-            t_start.value = t_start.minimum
-        return t_start
+    
 
     submit.click(
         fn=randomize_seed_fn,
@@ -262,7 +267,7 @@ with gr.Blocks(css='style.css') as demo:
     input_audio.change(fn=reset_do_inversion, outputs=[do_inversion])
     src_prompt.change(fn=reset_do_inversion, outputs=[do_inversion])
     model_id.change(fn=reset_do_inversion, outputs=[do_inversion])
-    steps.change(fn=change_tstart_range, inputs=[steps], outputs=[t_start])
+    # steps.change(fn=change_tstart_range, inputs=[steps], outputs=[t_start])
 
     gr.Examples(
         label="Examples",
