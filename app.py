@@ -10,6 +10,19 @@ import utils
 from inversion_utils import inversion_forward_process, inversion_reverse_process
 
 
+# current_loaded_model = "cvssp/audioldm2-music"
+# # current_loaded_model = "cvssp/audioldm2-music"
+
+# ldm_stable = load_model(current_loaded_model, device, 200)  # deafult model
+LDM2 = "cvssp/audioldm2"
+MUSIC = "cvssp/audioldm2-music"
+LDM2_LARGE = "cvssp/audioldm2-large"
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+ldm2 = load_model(model_id=LDM2, device=device)
+ldm2_large = load_model(model_id=LDM2_LARGE, device=device)
+ldm2_music = load_model(model_id= MUSIC, device=device)
+
+
 def randomize_seed_fn(seed, randomize_seed):
     if randomize_seed:
         seed = random.randint(0, np.iinfo(np.int32).max)
@@ -17,7 +30,7 @@ def randomize_seed_fn(seed, randomize_seed):
     return seed
 
 
-def invert(x0, prompt_src, num_diffusion_steps, cfg_scale_src):  # , ldm_stable):
+def invert(ldm_stable, x0, prompt_src, num_diffusion_steps, cfg_scale_src):  # , ldm_stable):
     ldm_stable.model.scheduler.set_timesteps(num_diffusion_steps, device=device)
 
     with inference_mode():
@@ -34,7 +47,7 @@ def invert(x0, prompt_src, num_diffusion_steps, cfg_scale_src):  # , ldm_stable)
 
 
 
-def sample(zs, wts, steps, prompt_tar, tstart, cfg_scale_tar):  # , ldm_stable):
+def sample(ldm_stable, zs, wts, steps, prompt_tar, tstart, cfg_scale_tar):  # , ldm_stable):
     # reverse process (via Zs and wT)
     tstart = torch.tensor(tstart, dtype=torch.int)
     skip = steps - tstart
@@ -79,13 +92,22 @@ def edit(input_audio,
          t_start=90,
          randomize_seed=True):
 
-    global ldm_stable, current_loaded_model
-    print(f'current loaded model: {ldm_stable.model_id}')
-    if model_id != current_loaded_model:
-        print(f'Changing model to {model_id}...')
-        current_loaded_model = model_id
-        ldm_stable = None
-        ldm_stable = load_model(model_id, device, steps)
+    # global ldm_stable, current_loaded_model
+    # print(f'current loaded model: {ldm_stable.model_id}')
+    # if model_id != current_loaded_model:
+    #     print(f'Changing model to {model_id}...')
+    #     current_loaded_model = model_id
+    #     ldm_stable = None
+    #     ldm_stable = load_model(model_id, device)
+    print(model_id)
+    if model_id == LDM2:
+        ldm_stable = ldm2
+    elif model_id == LDM2_LARGE:
+        ldm_stable = ldm2_large
+    else: # MUSIC
+        ldm_stable = ldm2_music
+        
+    
 
     # If the inversion was done for a different model, we need to re-run the inversion
     if not do_inversion and (saved_inv_model is None or saved_inv_model != model_id):
@@ -94,7 +116,7 @@ def edit(input_audio,
     x0 = utils.load_audio(input_audio, ldm_stable.get_fn_STFT(), device=device)
 
     if do_inversion or randomize_seed:  # always re-run inversion
-        zs_tensor, wts_tensor = invert(x0=x0, prompt_src=source_prompt,
+        zs_tensor, wts_tensor = invert(ldm_stable=ldm_stable, x0=x0, prompt_src=source_prompt,
                                        num_diffusion_steps=steps,
                                        cfg_scale_src=cfg_scale_src)
         wts = gr.State(value=wts_tensor)
@@ -105,16 +127,13 @@ def edit(input_audio,
     # make sure t_start is in the right limit
     t_start = change_tstart_range(t_start, steps)
 
-    output = sample(zs.value, wts.value, steps, prompt_tar=target_prompt, tstart=t_start,
+    output = sample(ldm_stable, zs.value, wts.value, steps, prompt_tar=target_prompt, tstart=t_start,
                     cfg_scale_tar=cfg_scale_tar)
 
     return output, wts, zs, saved_inv_model, do_inversion
 
 
-current_loaded_model = "cvssp/audioldm2-music"
-# current_loaded_model = "cvssp/audioldm2-music"
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-ldm_stable = load_model(current_loaded_model, device, 200)  # deafult model
+
 
 
 def get_example():
@@ -267,7 +286,7 @@ with gr.Blocks(css='style.css') as demo:
     input_audio.change(fn=reset_do_inversion, outputs=[do_inversion])
     src_prompt.change(fn=reset_do_inversion, outputs=[do_inversion])
     model_id.change(fn=reset_do_inversion, outputs=[do_inversion])
-    # steps.change(fn=change_tstart_range, inputs=[steps], outputs=[t_start])
+    steps.change(fn=reset_do_inversion, outputs=[do_inversion])
 
     gr.Examples(
         label="Examples",
