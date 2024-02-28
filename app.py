@@ -20,7 +20,7 @@ LDM2_LARGE = "cvssp/audioldm2-large"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 ldm2 = load_model(model_id=LDM2, device=device)
 ldm2_large = load_model(model_id=LDM2_LARGE, device=device)
-ldm2_music = load_model(model_id= MUSIC, device=device)
+ldm2_music = load_model(model_id=MUSIC, device=device)
 
 
 def randomize_seed_fn(seed, randomize_seed):
@@ -44,7 +44,6 @@ def invert(ldm_stable, x0, prompt_src, num_diffusion_steps, cfg_scale_src):  # ,
                                            num_inference_steps=num_diffusion_steps,
                                            numerical_fix=True)
     return zs, wts
-
 
 
 def sample(ldm_stable, zs, wts, steps, prompt_tar, tstart, cfg_scale_tar):  # , ldm_stable):
@@ -71,14 +70,16 @@ def sample(ldm_stable, zs, wts, steps, prompt_tar, tstart, cfg_scale_tar):  # , 
 
     return f.name
 
-def change_tstart_range(t_start, steps):
-    maximum = int(0.8 * steps)
-    minimum = int(0.15 * steps)
-    if t_start > maximum:
-        t_start = maximum
-    elif t_start < minimum:
-        t_start = minimum
-    return t_start
+
+# def change_tstart_range(t_start, steps):
+#     maximum = int(0.8 * steps)
+#     minimum = int(0.15 * steps)
+#     if t_start > maximum:
+#         t_start = maximum
+#     elif t_start < minimum:
+#         t_start = minimum
+#     return t_start
+
 
 def edit(input_audio,
          model_id: str,
@@ -89,7 +90,7 @@ def edit(input_audio,
          steps=200,
          cfg_scale_src=3.5,
          cfg_scale_tar=12,
-         t_start=90,
+         t_start=45,
          randomize_seed=True):
 
     # global ldm_stable, current_loaded_model
@@ -104,10 +105,8 @@ def edit(input_audio,
         ldm_stable = ldm2
     elif model_id == LDM2_LARGE:
         ldm_stable = ldm2_large
-    else: # MUSIC
+    else:  # MUSIC
         ldm_stable = ldm2_music
-        
-    
 
     # If the inversion was done for a different model, we need to re-run the inversion
     if not do_inversion and (saved_inv_model is None or saved_inv_model != model_id):
@@ -123,17 +122,14 @@ def edit(input_audio,
         zs = gr.State(value=zs_tensor)
         saved_inv_model = model_id
         do_inversion = False
-    
-    # make sure t_start is in the right limit
-    t_start = change_tstart_range(t_start, steps)
 
-    output = sample(ldm_stable, zs.value, wts.value, steps, prompt_tar=target_prompt, tstart=t_start,
-                    cfg_scale_tar=cfg_scale_tar)
+    # make sure t_start is in the right limit
+    # t_start = change_tstart_range(t_start, steps)
+
+    output = sample(ldm_stable, zs.value, wts.value, steps, prompt_tar=target_prompt,
+                    tstart=int(t_start / 100 * steps), cfg_scale_tar=cfg_scale_tar)
 
     return output, wts, zs, saved_inv_model, do_inversion
-
-
-
 
 
 def get_example():
@@ -141,7 +137,7 @@ def get_example():
         ['Examples/Beethoven.wav',
          '',
          'A recording of an arcade game soundtrack.',
-         90,
+         45,
          'cvssp/audioldm2-music',
          '27s',
          'Examples/Beethoven_arcade.wav',
@@ -149,7 +145,7 @@ def get_example():
         ['Examples/Beethoven.wav',
          'A high quality recording of wind instruments and strings playing.',
          'A high quality recording of a piano playing.',
-         90,
+         45,
          'cvssp/audioldm2-music',
          '27s',
          'Examples/Beethoven_piano.wav',
@@ -157,14 +153,14 @@ def get_example():
         ['Examples/ModalJazz.wav',
          'Trumpets playing alongside a piano, bass and drums in an upbeat old-timey cool jazz song.',
          'A banjo playing alongside a piano, bass and drums in an upbeat old-timey cool country song.',
-         90,
+         45,
          'cvssp/audioldm2-music',
          '106s',
          'Examples/ModalJazz_banjo.wav',],
         ['Examples/Cat.wav',
          '',
          'A dog barking.',
-         150,
+         75,
          'cvssp/audioldm2-large',
          '10s',
          'Examples/Cat_dog.wav',]
@@ -173,15 +169,15 @@ def get_example():
 
 
 intro = """
-<h1 style="font-weight: 1400; text-align: center; margin-bottom: 7px;"> AUDI 🎧  </h1>
-<h2 style="font-weight: 1400; text-align: center; margin-bottom: 7px;"> Audio editing Using DDPM Inversion 🎛️ </h2>
+<h1 style="font-weight: 1400; text-align: center; margin-bottom: 7px;"> ZETA Editing 🎧 </h1>
+<h2 style="font-weight: 1400; text-align: center; margin-bottom: 7px;"> Zero-Shot Text-Based Audio Editing Using DDPM Inversion 🎛️ </h2>
 <h3 style="margin-bottom: 10px; text-align: center;">
     <a href="https://arxiv.org/abs/2402.10009">[Paper]</a>&nbsp;|&nbsp;
     <a href="https://hilamanor.github.io/AudioEditing/">[Project page]</a>&nbsp;|&nbsp;
     <a href="https://github.com/HilaManor/AudioEditingCode">[Code]</a>
 </h3>
 <p style="font-size:large">
-Demo for the method introduced in:
+Demo for the text-based editing method introduced in:
 <b <a href="https://arxiv.org/abs/2402.10009" style="text-decoration: underline;" target="_blank">	Zero-Shot Unsupervised and Text-Based Audio Editing Using DDPM Inversion </a> </b>
 </p>
 <p style="font-size:larger">
@@ -228,22 +224,24 @@ with gr.Blocks(css='style.css') as demo:
         output_audio = gr.Audio(label="Edited Audio", interactive=False, scale=1)
 
     with gr.Row():
-            tar_prompt = gr.Textbox(label="Prompt", info="Describe your desired edited output", placeholder="a recording of a happy upbeat arcade game soundtrack",
-                                    lines=2, interactive=True)
-            
+        tar_prompt = gr.Textbox(label="Prompt", info="Describe your desired edited output", placeholder="a recording of a happy upbeat arcade game soundtrack",
+                                lines=2, interactive=True)
+
+    with gr.Row():
+        t_start = gr.Slider(minimum=15, maximum=85, value=45, step=1, label="T-start (%)", interactive=True, scale=3,
+                            info="Higher T-start -> stronger edit. Lower T-start -> closer to original audio.")
+        # model_id = gr.Dropdown(label="AudioLDM2 Version",
+        model_id = gr.Radio(label="AudioLDM2 Version",
+                            choices=["cvssp/audioldm2",
+                                     "cvssp/audioldm2-large",
+                                     "cvssp/audioldm2-music"],
+                            info="Choose a checkpoint suitable for your intended audio and edit",
+                            value="cvssp/audioldm2-music", interactive=True, type="value", scale=2)
 
     with gr.Row():
         with gr.Column():
             submit = gr.Button("Edit")
 
-    with gr.Row():
-        t_start = gr.Slider(minimum=10, maximum=240, value=30, step=1, label="T-start", interactive=True, scale=3,
-                            info="Higher T-start -> stronger edit. Lower T-start -> closer to original audio")
-        model_id = gr.Dropdown(label="AudioLDM2 Version", choices=["cvssp/audioldm2",
-                                                                   "cvssp/audioldm2-large",
-                                                                   "cvssp/audioldm2-music"],
-                               info="Choose a checkpoint suitable for your intended audio and edit",
-                               value="cvssp/audioldm2-music", interactive=True, type="value", scale=2)
     with gr.Accordion("More Options", open=False):
         with gr.Row():
             src_prompt = gr.Textbox(label="Source Prompt", lines=2, interactive=True, info= "Optional: Describe the original audio input",
