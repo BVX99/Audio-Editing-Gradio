@@ -224,19 +224,20 @@ with gr.Blocks(css='style.css') as demo:
         output_audio = gr.Audio(label="Edited Audio", interactive=False, scale=1)
 
     with gr.Row():
-        tar_prompt = gr.Textbox(label="Prompt", info="Describe your desired edited output", placeholder="a recording of a happy upbeat arcade game soundtrack",
+        tar_prompt = gr.Textbox(label="Prompt", info="Describe your desired edited output",
+                                placeholder="a recording of a happy upbeat arcade game soundtrack",
                                 lines=2, interactive=True)
 
     with gr.Row():
         t_start = gr.Slider(minimum=15, maximum=85, value=45, step=1, label="T-start (%)", interactive=True, scale=3,
-                            info="Higher T-start -> stronger edit. Lower T-start -> closer to original audio.")
-        # model_id = gr.Dropdown(label="AudioLDM2 Version",
-        model_id = gr.Radio(label="AudioLDM2 Version",
-                            choices=["cvssp/audioldm2",
-                                     "cvssp/audioldm2-large",
-                                     "cvssp/audioldm2-music"],
-                            info="Choose a checkpoint suitable for your intended audio and edit",
-                            value="cvssp/audioldm2-music", interactive=True, type="value", scale=2)
+                            info="Lower T-start -> closer to original audio. Higher T-start -> stronger edit.")
+        # model_id = gr.Radio(label="AudioLDM2 Version",
+        model_id = gr.Dropdown(label="AudioLDM2 Version",
+                               choices=["cvssp/audioldm2",
+                                        "cvssp/audioldm2-large",
+                                        "cvssp/audioldm2-music"],
+                               info="Choose a checkpoint suitable for your intended audio and edit",
+                               value="cvssp/audioldm2-music", interactive=True, type="value", scale=2)
 
     with gr.Row():
         with gr.Column():
@@ -244,7 +245,8 @@ with gr.Blocks(css='style.css') as demo:
 
     with gr.Accordion("More Options", open=False):
         with gr.Row():
-            src_prompt = gr.Textbox(label="Source Prompt", lines=2, interactive=True, info= "Optional: Describe the original audio input",
+            src_prompt = gr.Textbox(label="Source Prompt", lines=2, interactive=True,
+                                    info="Optional: Describe the original audio input",
                                     placeholder="A recording of a happy upbeat classical music piece",)
 
         with gr.Row():
@@ -253,6 +255,7 @@ with gr.Blocks(css='style.css') as demo:
             cfg_scale_tar = gr.Number(value=12, minimum=0.5, maximum=25, precision=None,
                                       label="Target Guidance Scale", interactive=True, scale=1)
             steps = gr.Number(value=50, step=1, minimum=20, maximum=300,
+                              info="Higher values (e.g. 200) yield higher-quality generation.",
                               label="Num Diffusion Steps", interactive=True, scale=1)
         with gr.Row():
             seed = gr.Number(value=0, precision=0, label="Seed", interactive=True)
