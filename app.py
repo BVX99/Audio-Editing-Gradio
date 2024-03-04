@@ -160,11 +160,7 @@ intro = """
     <a href="https://hilamanor.github.io/AudioEditing/">[Project page]</a>&nbsp;|&nbsp;
     <a href="https://github.com/HilaManor/AudioEditingCode">[Code]</a>
 </h3>
-<p style="font-size:large">
-Demo for 
-<b <a href="https://arxiv.org/abs/2402.10009" style="text-decoration: underline;" target="_blank">	Zero-Shot Unsupervised and Text-Based Audio Editing Using DDPM Inversion </a> </b>
-</p>
-<p style="font-size:larger">
+
 
 <p style="font-size: 0.9rem; margin: 0rem; line-height: 1.2em; margin-top:1em">
 For faster inference without waiting in queue, you may duplicate the space and upgrade to GPU in settings.
