@@ -16,7 +16,7 @@ def load_audio(audio_path: Union[str, np.array], fn_STFT, left: int = 0, right: 
         import audioldm
         import audioldm.audio
 
-        duration = audioldm.utils.get_duration(audio_path)
+        duration = min(audioldm.utils.get_duration(audio_path), 15)
 
         mel, _, _ = audioldm.audio.wav_to_fbank(audio_path, target_length=int(duration * 102.4), fn_STFT=fn_STFT)
         mel = mel.unsqueeze(0)

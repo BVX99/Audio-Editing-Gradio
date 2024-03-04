@@ -71,15 +71,6 @@ def sample(ldm_stable, zs, wts, steps, prompt_tar, tstart, cfg_scale_tar):  # , 
     return f.name
 
 
-# def change_tstart_range(t_start, steps):
-#     maximum = int(0.8 * steps)
-#     minimum = int(0.15 * steps)
-#     if t_start > maximum:
-#         t_start = maximum
-#     elif t_start < minimum:
-#         t_start = minimum
-#     return t_start
-
 
 def edit(input_audio,
          model_id: str,
@@ -93,13 +84,6 @@ def edit(input_audio,
          t_start=45,
          randomize_seed=True):
 
-    # global ldm_stable, current_loaded_model
-    # print(f'current loaded model: {ldm_stable.model_id}')
-    # if model_id != current_loaded_model:
-    #     print(f'Changing model to {model_id}...')
-    #     current_loaded_model = model_id
-    #     ldm_stable = None
-    #     ldm_stable = load_model(model_id, device)
     print(model_id)
     if model_id == LDM2:
         ldm_stable = ldm2
@@ -219,7 +203,7 @@ with gr.Blocks(css='style.css') as demo:
     do_inversion = gr.State(value=True)  # To save some runtime when editing the same thing over and over
 
     with gr.Row():
-        input_audio = gr.Audio(sources=["upload", "microphone"], max_length=15, type="filepath", label="Input Audio",
+        input_audio = gr.Audio(sources=["upload", "microphone"], type="filepath", label="Input Audio",
                                interactive=True, scale=1)
         output_audio = gr.Audio(label="Edited Audio", interactive=False, scale=1)
 
