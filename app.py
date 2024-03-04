@@ -199,7 +199,7 @@ with gr.Blocks(css='style.css') as demo:
     do_inversion = gr.State(value=True)  # To save some runtime when editing the same thing over and over
 
     with gr.Group():
-        gr.Markdown(" **note** 💡: input longer than **45 sec** is automatically trimmed")
+        gr.Markdown("💡 **note**: input longer than **30 sec** is automatically trimmed (for unlimited input you may duplicate the space)")
         with gr.Row():
             input_audio = gr.Audio(sources=["upload", "microphone"], type="filepath", label="Input Audio",
                                    interactive=True, scale=1)
