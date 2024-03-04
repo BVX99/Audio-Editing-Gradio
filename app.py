@@ -161,7 +161,7 @@ intro = """
     <a href="https://github.com/HilaManor/AudioEditingCode">[Code]</a>
 </h3>
 <p style="font-size:large">
-Demo for the text-based editing method introduced in:
+Demo for 
 <b <a href="https://arxiv.org/abs/2402.10009" style="text-decoration: underline;" target="_blank">	Zero-Shot Unsupervised and Text-Based Audio Editing Using DDPM Inversion </a> </b>
 </p>
 <p style="font-size:larger">
