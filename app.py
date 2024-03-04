@@ -219,7 +219,7 @@ with gr.Blocks(css='style.css') as demo:
     do_inversion = gr.State(value=True)  # To save some runtime when editing the same thing over and over
 
     with gr.Row():
-        input_audio = gr.Audio(sources=["upload", "microphone"], type="filepath", label="Input Audio",
+        input_audio = gr.Audio(sources=["upload", "microphone"], max_length=15, type="filepath", label="Input Audio",
                                interactive=True, scale=1)
         output_audio = gr.Audio(label="Edited Audio", interactive=False, scale=1)
 
