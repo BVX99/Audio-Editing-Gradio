@@ -202,10 +202,12 @@ with gr.Blocks(css='style.css') as demo:
     # ldm_stable = gr.State(value=ldm_stable)
     do_inversion = gr.State(value=True)  # To save some runtime when editing the same thing over and over
 
-    with gr.Row():
-        input_audio = gr.Audio(sources=["upload", "microphone"], type="filepath", label="Input Audio",
-                               interactive=True, scale=1)
-        output_audio = gr.Audio(label="Edited Audio", interactive=False, scale=1)
+    with gr.Group():
+        gr.Markdown("note 💡: input longer than 60 sec is automatically trimmed")
+        with gr.Row():
+            input_audio = gr.Audio(sources=["upload", "microphone"], type="filepath", label="Input Audio",
+                                   interactive=True, scale=1)
+            output_audio = gr.Audio(label="Edited Audio", interactive=False, scale=1)
 
     with gr.Row():
         tar_prompt = gr.Textbox(label="Prompt", info="Describe your desired edited output",
