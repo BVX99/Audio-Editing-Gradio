@@ -71,7 +71,6 @@ def sample(ldm_stable, zs, wts, steps, prompt_tar, tstart, cfg_scale_tar):  # , 
     return f.name
 
 
-
 def edit(input_audio,
          model_id: str,
          do_inversion: bool,
@@ -201,7 +200,7 @@ with gr.Blocks(css='style.css') as demo:
     with gr.Group():
         gr.Markdown("💡 **note**: input longer than **30 sec** is automatically trimmed (for unlimited input you may duplicate the space)")
         with gr.Row():
-            input_audio = gr.Audio(sources=["upload", "microphone"], type="filepath", editable=False, label="Input Audio",
+            input_audio = gr.Audio(sources=["upload", "microphone"], type="filepath", editable=True, label="Input Audio",
                                    interactive=True, scale=1)
             output_audio = gr.Audio(label="Edited Audio", interactive=False, scale=1)
 
