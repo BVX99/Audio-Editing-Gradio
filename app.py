@@ -1,7 +1,7 @@
 import gradio as gr
 import random
 import torch
-import torchaudio
+import os
 from torch import inference_mode
 from tempfile import NamedTemporaryFile
 import numpy as np
@@ -65,16 +65,16 @@ def sample(ldm_stable, zs, wts, steps, prompt_tar, tstart, cfg_scale_tar):  # , 
     with torch.no_grad():
         audio = ldm_stable.decode_to_mel(x0_dec)
 
-    f = NamedTemporaryFile("wb", suffix=".wav", delete=False)
-    torchaudio.save(f.name, audio, sample_rate=16000)
-
-    return f.name
+    return (16000, audio.squeeze().cpu().numpy())
 
 
-def edit(input_audio,
+def edit(cache_dir,
+         input_audio,
          model_id: str,
          do_inversion: bool,
-         wts: gr.State, zs: gr.State, saved_inv_model: str,
+         wtszs_file: str,
+         #  wts: gr.State, zs: gr.State,
+         saved_inv_model: str,
          source_prompt="",
          target_prompt="",
          steps=200,
@@ -95,24 +95,41 @@ def edit(input_audio,
     if not do_inversion and (saved_inv_model is None or saved_inv_model != model_id):
         do_inversion = True
 
+    if input_audio is None:
+        raise gr.Error('Input audio missing!')
     x0 = utils.load_audio(input_audio, ldm_stable.get_fn_STFT(), device=device)
+
+    if not (do_inversion or randomize_seed):
+        if not os.path.exists(wtszs_file):
+            do_inversion = True
+            # Too much time has passed
 
     if do_inversion or randomize_seed:  # always re-run inversion
         zs_tensor, wts_tensor = invert(ldm_stable=ldm_stable, x0=x0, prompt_src=source_prompt,
                                        num_diffusion_steps=steps,
                                        cfg_scale_src=cfg_scale_src)
-        wts = gr.State(value=wts_tensor)
-        zs = gr.State(value=zs_tensor)
+        f = NamedTemporaryFile("wb", dir=cache_dir, suffix=".pth", delete=False)
+        torch.save({'wts': wts_tensor, 'zs': zs_tensor}, f.name)
+        wtszs_file = f.name
+        # wtszs_file = gr.State(value=f.name)
+        # wts = gr.State(value=wts_tensor)
+        # zs = gr.State(value=zs_tensor)
+        # demo.move_resource_to_block_cache(f.name)
         saved_inv_model = model_id
         do_inversion = False
+    else:
+        wtszs = torch.load(wtszs_file, map_location=device)
+        # wtszs = torch.load(wtszs_file.f, map_location=device)
+        wts_tensor = wtszs['wts']
+        zs_tensor = wtszs['zs']
 
     # make sure t_start is in the right limit
     # t_start = change_tstart_range(t_start, steps)
 
-    output = sample(ldm_stable, zs.value, wts.value, steps, prompt_tar=target_prompt,
+    output = sample(ldm_stable, zs_tensor, wts_tensor, steps, prompt_tar=target_prompt,
                     tstart=int(t_start / 100 * steps), cfg_scale_tar=cfg_scale_tar)
 
-    return output, wts, zs, saved_inv_model, do_inversion
+    return output, wtszs_file, saved_inv_model, do_inversion
 
 
 def get_example():
@@ -170,27 +187,36 @@ For faster inference without waiting in queue, you may duplicate the space and u
 """
 
 help = """
+<div style="font-size:medium">
 <b>Instructions:</b><br>
-Provide an input audio and a target prompt to edit the audio. <br>
-T<sub>start</sub> is used to control the tradeoff between fidelity to the original signal and text-adhearance.
-Lower value -> favor fidelity. Higher value -> apply a stronger edit.<br>
-Make sure that you use an AudioLDM2 version that is suitable for your input audio.
+<ul style="line-height: normal">
+<li>You must provide an input audio and a target prompt to edit the audio. </li>
+<li>T<sub>start</sub> is used to control the tradeoff between fidelity to the original signal and text-adhearance.
+Lower value -> favor fidelity. Higher value -> apply a stronger edit.</li>
+<li>Make sure that you use an AudioLDM2 version that is suitable for your input audio.
 For example, use the music version for music and the large version for general audio.
-</p>
-<p style="font-size:larger">
-You can additionally provide a source prompt to guide even further the editing process.
-</p>
-<p style="font-size:larger">Longer input will take more time.</p>
+</li>
+<li>You can additionally provide a source prompt to guide even further the editing process.</li>
+<li>Longer input will take more time.</li>
+<li><strong>Unlimited length</strong>: This space automatically trims input audio to a maximum length of 30 seconds.
+For unlimited length, duplicated the space, and remove the trimming by changing the code.
+Specifically, in the <code style="display:inline; background-color: lightgrey; ">load_audio</code> function in the <code style="display:inline; background-color: lightgrey; ">utils.py</code> file,
+change <code style="display:inline; background-color: lightgrey; ">duration = min(audioldm.utils.get_duration(audio_path), 30)</code> to 
+<code style="display:inline; background-color: lightgrey; ">duration = audioldm.utils.get_duration(audio_path)</code>.
+</ul>
+</div>
 
 """
 
-with gr.Blocks(css='style.css') as demo:
+with gr.Blocks(css='style.css', delete_cache=(3600, 3600)) as demo:
     def reset_do_inversion():
         do_inversion = gr.State(value=True)
         return do_inversion
     gr.HTML(intro)
-    wts = gr.State()
-    zs = gr.State()
+    # wts = gr.State()
+    # zs = gr.State()
+    wtszs = gr.State()
+    cache_dir = gr.State(demo.GRADIO_CACHE)
     saved_inv_model = gr.State()
     # current_loaded_model = gr.State(value="cvssp/audioldm2-music")
     # ldm_stable = load_model("cvssp/audioldm2-music", device, 200)
@@ -198,7 +224,7 @@ with gr.Blocks(css='style.css') as demo:
     do_inversion = gr.State(value=True)  # To save some runtime when editing the same thing over and over
 
     with gr.Group():
-        gr.Markdown("💡 **note**: input longer than **30 sec** is automatically trimmed (for unlimited input you may duplicate the space)")
+        gr.Markdown("💡 **note**: input longer than **30 sec** is automatically trimmed (for unlimited input, see the Help section below)")
         with gr.Row():
             input_audio = gr.Audio(sources=["upload", "microphone"], type="filepath", editable=True, label="Input Audio",
                                    interactive=True, scale=1)
@@ -251,11 +277,14 @@ with gr.Blocks(css='style.css') as demo:
         inputs=[seed, randomize_seed],
         outputs=[seed], queue=False).then(
            fn=edit,
-           inputs=[input_audio,
+           inputs=[cache_dir,
+                   input_audio,
                    model_id,
                    do_inversion,
                    #    current_loaded_model, ldm_stable,
-                   wts, zs, saved_inv_model,
+                   #    wts, zs,
+                   wtszs,
+                   saved_inv_model,
                    src_prompt,
                    tar_prompt,
                    steps,
@@ -264,8 +293,12 @@ with gr.Blocks(css='style.css') as demo:
                    t_start,
                    randomize_seed
                    ],
-           outputs=[output_audio, wts, zs, saved_inv_model, do_inversion]  # , current_loaded_model, ldm_stable],
-        )
+           outputs=[output_audio, wtszs,
+                    saved_inv_model, do_inversion]  # , current_loaded_model, ldm_stable],
+        ).then(lambda x: demo.temp_file_sets.append(set([str(gr.utils.abspath(x))])) if type(x) is str else None,
+               inputs=wtszs)
+
+    # demo.move_resource_to_block_cache(wtszs.value)
 
     # If sources changed we have to rerun inversion
     input_audio.change(fn=reset_do_inversion, outputs=[do_inversion])
