@@ -209,9 +209,23 @@ change <code style="display:inline; background-color: lightgrey; ">duration = mi
 """
 
 with gr.Blocks(css='style.css', delete_cache=(3600, 3600)) as demo:
-    def reset_do_inversion():
-        do_inversion = gr.State(value=True)
-        return do_inversion
+    def reset_do_inversion(do_inversion_user, do_inversion):
+        # do_inversion = gr.State(value=True)
+        do_inversion = True
+        do_inversion_user = True
+        return do_inversion_user, do_inversion
+
+    # handle the case where the user clicked the button but the inversion was not done
+    def clear_do_inversion_user(do_inversion_user):
+        do_inversion_user = False
+        return do_inversion_user
+    def post_match_do_inversion(do_inversion_user, do_inversion):
+        if do_inversion_user:
+            do_inversion = True
+            do_inversion_user = False
+        return do_inversion_user, do_inversion
+        
+    
     gr.HTML(intro)
     # wts = gr.State()
     # zs = gr.State()
@@ -222,6 +236,7 @@ with gr.Blocks(css='style.css', delete_cache=(3600, 3600)) as demo:
     # ldm_stable = load_model("cvssp/audioldm2-music", device, 200)
     # ldm_stable = gr.State(value=ldm_stable)
     do_inversion = gr.State(value=True)  # To save some runtime when editing the same thing over and over
+    do_inversion_user = gr.State(value=False)
 
     with gr.Group():
         gr.Markdown("💡 **note**: input longer than **30 sec** is automatically trimmed (for unlimited input, see the Help section below)")
@@ -276,6 +291,7 @@ with gr.Blocks(css='style.css', delete_cache=(3600, 3600)) as demo:
         fn=randomize_seed_fn,
         inputs=[seed, randomize_seed],
         outputs=[seed], queue=False).then(
+            fn=clear_do_inversion_user, inputs=[do_inversion_user], outputs=[do_inversion_user]).then(
            fn=edit,
            inputs=[cache_dir,
                    input_audio,
@@ -295,16 +311,18 @@ with gr.Blocks(css='style.css', delete_cache=(3600, 3600)) as demo:
                    ],
            outputs=[output_audio, wtszs,
                     saved_inv_model, do_inversion]  # , current_loaded_model, ldm_stable],
-        ).then(lambda x: demo.temp_file_sets.append(set([str(gr.utils.abspath(x))])) if type(x) is str else None,
+        ).then(post_match_do_inversion, inputs=[do_inversion_user, do_inversion], outputs=[do_inversion_user, do_inversion]
+               ).then(lambda x: (demo.temp_file_sets.append(set([str(gr.utils.abspath(x))])) if type(x) is str else None),
                inputs=wtszs)
 
     # demo.move_resource_to_block_cache(wtszs.value)
 
     # If sources changed we have to rerun inversion
-    input_audio.change(fn=reset_do_inversion, outputs=[do_inversion])
-    src_prompt.change(fn=reset_do_inversion, outputs=[do_inversion])
-    model_id.change(fn=reset_do_inversion, outputs=[do_inversion])
-    steps.change(fn=reset_do_inversion, outputs=[do_inversion])
+    input_audio.change(fn=reset_do_inversion, inputs=[do_inversion_user, do_inversion], outputs=[do_inversion_user, do_inversion])
+    src_prompt.change(fn=reset_do_inversion, inputs=[do_inversion_user, do_inversion], outputs=[do_inversion_user, do_inversion])
+    model_id.change(fn=reset_do_inversion, inputs=[do_inversion_user, do_inversion], outputs=[do_inversion_user, do_inversion])
+    cfg_scale_src.change(fn=reset_do_inversion, inputs=[do_inversion_user, do_inversion], outputs=[do_inversion_user, do_inversion])
+    steps.change(fn=reset_do_inversion, inputs=[do_inversion_user, do_inversion], outputs=[do_inversion_user, do_inversion])
 
     gr.Examples(
         label="Examples",
