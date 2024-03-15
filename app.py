@@ -208,7 +208,7 @@ change <code style="display:inline; background-color: lightgrey; ">duration = mi
 
 """
 
-with gr.Blocks(css='style.css', delete_cache=(3600, 3600)) as demo:
+with gr.Blocks(theme='Hev832/soft', css='style.css', delete_cache=(3600, 3600)) as demo:
     def reset_do_inversion(do_inversion_user, do_inversion):
         # do_inversion = gr.State(value=True)
         do_inversion = True
@@ -332,4 +332,4 @@ with gr.Blocks(css='style.css', delete_cache=(3600, 3600)) as demo:
     )
 
     demo.queue()
-    demo.launch()
+    demo.launch(share=True)
