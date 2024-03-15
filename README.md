@@ -1,12 +1,3 @@
----
-title: Audio Editing
-emoji: 🎧
-colorFrom: indigo
-colorTo: gray
-sdk: gradio
-sdk_version: 4.21.0
-app_file: app.py
-pinned: false
----
+# Audio Editing WebUi
 
-Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+this code is based by: [hilamanor/audioEditing](https://huggingface.co/spaces/hilamanor/audioEditing), [AudioEditingCode](https://github.com/HilaManor/AudioEditingCode) and made for google colaboratory
